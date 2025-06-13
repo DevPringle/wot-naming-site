@@ -21,7 +21,51 @@ exports.handler = async (event, context) => {
       };
     }
 
+    const cleanSiteName = siteName.trim();
+    const cleanUsername = username.trim();
+    
+    console.log('Checking for duplicate site name:', cleanSiteName);
+
+    // Check if this site name already exists (case-insensitive)
+    const filterFormula = `LOWER({siteName})=LOWER('${cleanSiteName.replace(/'/g, "\\'")}')`;
+    console.log('Using filter formula:', filterFormula);
+    
+    const existingSubmissionsResponse = await fetch(
+      `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/submissions?filterByFormula=${encodeURIComponent(filterFormula)}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.AIRTABLE_API_TOKEN}`,
+        }
+      }
+    );
+
+    if (!existingSubmissionsResponse.ok) {
+      const errorText = await existingSubmissionsResponse.text();
+      console.log('Error checking existing submissions:', errorText);
+      // Continue without duplicate check if this fails
+    } else {
+      const existingSubmissions = await existingSubmissionsResponse.json();
+      console.log('Found', existingSubmissions.records.length, 'existing submissions with this name');
+      
+      if (existingSubmissions.records.length > 0) {
+        const existingSubmission = existingSubmissions.records[0];
+        console.log('Blocking duplicate submission:', cleanSiteName);
+        return {
+          statusCode: 400,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type',
+          },
+          body: JSON.stringify({
+            error: `This site name "${cleanSiteName}" has already been submitted by ${existingSubmission.fields.username}!`,
+            success: false
+          }),
+        };
+      }
+    }
+
     // Create the submission in Airtable
+    console.log('Creating new submission:', cleanSiteName, 'by', cleanUsername);
     const response = await fetch(`https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/submissions`, {
       method: 'POST',
       headers: {
@@ -30,20 +74,21 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({
         fields: {
-          username: username.trim(),
-          siteName: siteName.trim(),
+          username: cleanUsername,
+          siteName: cleanSiteName,
           approved: true,
-          // Remove createdAt - let Airtable handle it automatically
         }
       })
     });
 
     if (!response.ok) {
       const error = await response.json();
+      console.error('Airtable submission error:', error);
       throw new Error(`Airtable error: ${error.error?.message || 'Unknown error'}`);
     }
 
     const result = await response.json();
+    console.log('Submission created successfully:', result.id);
 
     return {
       statusCode: 200,

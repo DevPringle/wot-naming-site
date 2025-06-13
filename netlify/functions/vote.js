@@ -59,7 +59,7 @@ exports.handler = async (event, context) => {
             'Access-Control-Allow-Headers': 'Content-Type',
           },
           body: JSON.stringify({
-            error: 'You have already voted for this submission!',
+            error: 'Someone from your network has already voted for this submission!',
             success: false
           }),
         };
