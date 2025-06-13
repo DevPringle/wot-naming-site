@@ -1,0 +1,14 @@
+{
+  "name": "wot-naming-site",
+  "version": "1.0.0",
+  "description": "WoT Fantasy Sports site naming contest",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'No build step needed'"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "keywords": ["netlify", "airtable", "contest"],
+  "author": "Your Name",
+  "license": "MIT"
+}
