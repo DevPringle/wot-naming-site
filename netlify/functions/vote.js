@@ -27,7 +27,7 @@ exports.handler = async (event, context) => {
                    event.headers['cf-connecting-ip'] || 
                    'unknown';
     
-    console.log('Vote attempt from IP:', userIP, 'for submission:', submissionId);
+    console.log('Vote attempt from user:', userIP, 'for submission:', submissionId);
 
     // Check if this IP already voted for this submission
     const filterFormula = `AND({voterIP}='${userIP}',{submissionId}='${submissionId}')`;
@@ -48,10 +48,10 @@ exports.handler = async (event, context) => {
       // Continue without duplicate check if this fails
     } else {
       const existingVotes = await existingVotesResponse.json();
-      console.log('Found', existingVotes.records.length, 'existing votes from this IP for this submission');
+      console.log('Found', existingVotes.records.length, 'existing votes from this user for this submission');
       
       if (existingVotes.records.length > 0) {
-        console.log('Blocking duplicate vote from IP:', userIP);
+        console.log('Blocking duplicate vote from user:', userIP);
         return {
           statusCode: 400,
           headers: {
@@ -59,7 +59,7 @@ exports.handler = async (event, context) => {
             'Access-Control-Allow-Headers': 'Content-Type',
           },
           body: JSON.stringify({
-            error: 'Someone from your network has already voted for this submission!',
+            error: 'You have already voted for this submission!',
             success: false
           }),
         };
@@ -67,7 +67,7 @@ exports.handler = async (event, context) => {
     }
 
     // Create the vote in Airtable
-    console.log('Creating new vote for IP:', userIP);
+    console.log('Creating new vote for user:', userIP);
     const response = await fetch(`https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/votes`, {
       method: 'POST',
       headers: {
@@ -89,7 +89,7 @@ exports.handler = async (event, context) => {
       throw new Error(`Airtable error: ${error.error?.message || 'Unknown error'}`);
     }
 
-    console.log('Vote recorded successfully for IP:', userIP);
+    console.log('Vote recorded successfully for user:', userIP);
     
     return {
       statusCode: 200,
