@@ -33,7 +33,7 @@ exports.handler = async (event, context) => {
           username: username.trim(),
           siteName: siteName.trim(),
           approved: true,
-          createdAt: new Date().toISOString(),
+          // Remove createdAt - let Airtable handle it automatically
         }
       })
     });

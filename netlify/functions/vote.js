@@ -32,7 +32,7 @@ exports.handler = async (event, context) => {
         fields: {
           voterUsername: voterUsername.trim(),
           submissionId: submissionId,
-          createdAt: new Date().toISOString(),
+          // Remove createdAt - let Airtable handle it automatically
         }
       })
     });
